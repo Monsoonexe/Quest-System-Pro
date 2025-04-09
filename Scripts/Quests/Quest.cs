@@ -1,8 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
-using Devdog.General;
+﻿using Devdog.General;
 using Devdog.General.Localization;
 using Devdog.General.ThirdParty.UniLinq;
+using System;
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace Devdog.QuestSystemPro
@@ -46,14 +46,14 @@ namespace Devdog.QuestSystemPro
                 _tasks = value;
                 RegisterEventsOnTasks();
 
-                foreach (var task in _tasks)
+                foreach (Task task in _tasks)
                 {
                     task.owner = this;
                 }
 
 #if UNITY_EDITOR
                 var prevKeys = new List<string>();
-                foreach (var task in tasks)
+                foreach (Task task in tasks)
                 {
                     if (prevKeys.Contains(task.key))
                     {
@@ -69,7 +69,7 @@ namespace Devdog.QuestSystemPro
         [Header("Rewards")]
         public IRewardGiver[] onActivationRewardGivers = new IRewardGiver[0];
         public IRewardGiver[] rewardGivers = new IRewardGiver[0];
-        
+
 
         //        [MinValue(1)]
         public int maxRepeatTimes = 1;
@@ -82,7 +82,6 @@ namespace Devdog.QuestSystemPro
             protected set { _repeatedTimes = value; }
         }
 
-        
         [NonSerialized]
         private QuestStatus _status = QuestStatus.InActive;
         public QuestStatus status
@@ -90,7 +89,7 @@ namespace Devdog.QuestSystemPro
             get { return _status; }
             protected set
             {
-                var before = _status;
+                QuestStatus before = _status;
                 _status = value;
 
                 if (before != _status)
@@ -107,7 +106,6 @@ namespace Devdog.QuestSystemPro
 
         [Required]
         public IQuestTimeHandler timeHandler = new QuestTimeHandler();
-
 
         /// <summary>
         /// The local identifier this quest belongs to (set at run-time).
@@ -126,7 +124,7 @@ namespace Devdog.QuestSystemPro
 
         public static Quest Create(ILocalIdentifier localIdentifier, int id = 0)
         {
-            var q = CreateInstance<Quest>();
+            Quest q = CreateInstance<Quest>();
             q.ID = id;
             q.localIdentifier = localIdentifier;
 
@@ -139,7 +137,7 @@ namespace Devdog.QuestSystemPro
 
             RegisterEventsOnTasks();
 
-            foreach (var task in _tasks)
+            foreach (Task task in _tasks)
             {
                 task.owner = this;
             }
@@ -155,10 +153,7 @@ namespace Devdog.QuestSystemPro
         protected virtual void DoNotifyReachedTimeLimit(Task task)
         {
             QuestManager.instance.NotifyQuestTaskReachedTimeLimit(task, this);
-            if (OnTaskReachedTimeLimit != null)
-            {
-                OnTaskReachedTimeLimit(task, this);
-            }
+            OnTaskReachedTimeLimit?.Invoke(task, this);
         }
 
         public void NotifyTaskProgressChanged(float before, Task task)
@@ -173,10 +168,7 @@ namespace Devdog.QuestSystemPro
         protected virtual void DoNotifyTaskProgressChanged(float before, Task task)
         {
             QuestManager.instance.NotifyQuestTaskProgressChanged(before, task, this);
-            if (OnTaskProgressChanged != null)
-            {
-                OnTaskProgressChanged(before, task, this);
-            }
+            OnTaskProgressChanged?.Invoke(before, task, this);
         }
 
         public void NotifyTaskStatusChanged(TaskStatus before, TaskStatus after, Task task)
@@ -186,7 +178,7 @@ namespace Devdog.QuestSystemPro
             // Activate the next task (if one is found)
             if (after == TaskStatus.Completed)
             {
-                var t = tasks.FirstOrDefault(o => o.status == TaskStatus.InActive);
+                Task t = tasks.FirstOrDefault(o => o.status == TaskStatus.InActive);
                 if (t != null)
                 {
                     t.Activate();
@@ -197,10 +189,7 @@ namespace Devdog.QuestSystemPro
         protected virtual void DoNotifyTaskStatusChanged(TaskStatus before, TaskStatus after, Task task)
         {
             QuestManager.instance.NotifyQuestTaskStatusChanged(before, after, task, this);
-            if (OnTaskStatusChanged != null)
-            {
-                OnTaskStatusChanged(before, task, this);
-            }
+            OnTaskStatusChanged?.Invoke(before, task, this);
         }
 
         public void NotifyStatusChanged(QuestStatus before)
@@ -211,10 +200,7 @@ namespace Devdog.QuestSystemPro
         protected virtual void DoNotifyQuestStatusChanged(QuestStatus before)
         {
             QuestManager.instance.NotifyQuestStatusChanged(before, this);
-            if (OnStatusChanged != null)
-            {
-                OnStatusChanged(before, this);
-            }
+            OnStatusChanged?.Invoke(before, this);
         }
 
         #endregion
@@ -223,7 +209,7 @@ namespace Devdog.QuestSystemPro
 
         private void UnRegisterEventsOnTasks()
         {
-            foreach (var task in tasks)
+            foreach (Task task in tasks)
             {
                 task.OnReachedTimeLimit -= NotifyReachedTimeLimit;
                 task.OnProgressChanged -= NotifyTaskProgressChanged;
@@ -233,7 +219,7 @@ namespace Devdog.QuestSystemPro
 
         private void RegisterEventsOnTasks()
         {
-            foreach (var task in tasks)
+            foreach (Task task in tasks)
             {
                 task.OnReachedTimeLimit += NotifyReachedTimeLimit;
                 task.OnProgressChanged += NotifyTaskProgressChanged;
@@ -249,12 +235,12 @@ namespace Devdog.QuestSystemPro
                 return false;
             }
 
-            if(taskOrder == TaskOrder.Single)
+            if (taskOrder == TaskOrder.Single)
             {
-                var setProgressTask = GetTask(key);
-                foreach (var task in tasks)
+                Task setProgressTask = GetTask(key);
+                foreach (Task task in tasks)
                 {
-                    if(task == setProgressTask)
+                    if (task == setProgressTask)
                     {
                         break;
                     }
@@ -277,7 +263,7 @@ namespace Devdog.QuestSystemPro
                 return false;
             }
 
-            var task = GetTask(key);
+            Task task = GetTask(key);
             if (task != null)
             {
                 return task.SetProgress(value);
@@ -288,7 +274,7 @@ namespace Devdog.QuestSystemPro
 
         public bool ChangeTaskProgress(string key, float value)
         {
-            var task = GetTask(key);
+            Task task = GetTask(key);
             if (task != null)
             {
                 return SetTaskProgress(key, task.progress + value);
@@ -305,7 +291,7 @@ namespace Devdog.QuestSystemPro
 
         public bool AreRequiredTasksCompletable()
         {
-            foreach (var task in tasks)
+            foreach (Task task in tasks)
             {
                 if (task.IsProgressSufficientToComplete() == false && task.requirement == TaskRequirement.Required)
                 {
@@ -320,7 +306,7 @@ namespace Devdog.QuestSystemPro
         {
             return tasks.FirstOrDefault(task => task.key == key);
 
-//            DevdogLogger.LogVerbose("Couldn't find quest task with name " + key + " on quest with ID #" + ID);
+            //            DevdogLogger.LogVerbose("Couldn't find quest task with name " + key + " on quest with ID #" + ID);
         }
 
         public List<Task> GetFailedTasks()
@@ -383,7 +369,7 @@ namespace Devdog.QuestSystemPro
         public ConditionInfo CanActivate()
         {
 
-            foreach (var quest in requiresOnQuests)
+            foreach (Asset<Quest> quest in requiresOnQuests)
             {
                 if (quest.val == null)
                     continue;
@@ -393,7 +379,8 @@ namespace Devdog.QuestSystemPro
                     return new ConditionInfo(false, QuestManager.instance.languageDatabase.canNotAcceptQuestRequiresCompletedQuest);
                 }
             }
-            foreach (var quest in requiresFinishedQuests)
+
+            foreach (Asset<Quest> quest in requiresFinishedQuests)
             {
                 if (quest.val == null)
                     continue;
@@ -404,23 +391,24 @@ namespace Devdog.QuestSystemPro
                 }
             }
 
-            if (repeatedTimes + 1 > maxRepeatTimes)
+
+            if (!CanRepeat())
             {
                 return new ConditionInfo(false, QuestManager.instance.languageDatabase.canNotAcceptQuestReachedMaxRepeatTimes);
             }
 
-            foreach (var condition in conditions)
+            foreach (IQuestCondition condition in conditions)
             {
-                var s = condition.CanActivateQuest(this);
+                ConditionInfo s = condition.CanActivateQuest(this);
                 if (s == false)
                 {
                     return s;
                 }
             }
 
-            foreach (var rewardGiver in onActivationRewardGivers)
+            foreach (IRewardGiver rewardGiver in onActivationRewardGivers)
             {
-                var s = rewardGiver.CanGiveRewards(this);
+                ConditionInfo s = rewardGiver.CanGiveRewards(this);
                 if (s == false)
                 {
                     return s;
@@ -435,6 +423,10 @@ namespace Devdog.QuestSystemPro
             return ConditionInfo.success;
         }
 
+        public bool CanRepeat()
+        {
+            return repeatedTimes < maxRepeatTimes;
+        }
 
         public ConditionInfo CanComplete()
         {
@@ -448,25 +440,25 @@ namespace Devdog.QuestSystemPro
             //                return new ConditionInfo(false, QuestManager.instance.languageDatabase.canNotCompleteQuestTasksAreNotCompleted);
             //            }
 
-            foreach (var condition in conditions)
+            foreach (IQuestCondition condition in conditions)
             {
-                var c = condition.CanCompleteQuest(this);
+                ConditionInfo c = condition.CanCompleteQuest(this);
                 if (c == false)
                 {
                     return c;
                 }
             }
 
-            foreach (var task in tasks)
+            foreach (Task task in tasks)
             {
-                var can = task.CanComplete();
+                ConditionInfo can = task.CanComplete();
                 if (can == false)
                 {
                     return can;
                 }
             }
 
-            var canGiveRewards = CanGiveRewards();
+            ConditionInfo canGiveRewards = CanGiveRewards();
             if (canGiveRewards == false)
             {
                 return canGiveRewards;
@@ -479,13 +471,13 @@ namespace Devdog.QuestSystemPro
         {
             if (status != QuestStatus.Active)
             {
-//                DevdogLogger.Log("Tried to cancel an inactive quest. Quest ID: " + ID, DevdogLogger.LogType.Minimal);
+                //                DevdogLogger.Log("Tried to cancel an inactive quest. Quest ID: " + ID, DevdogLogger.LogType.Minimal);
                 return new ConditionInfo(false);
             }
 
-            foreach (var condition in conditions)
+            foreach (IQuestCondition condition in conditions)
             {
-                var c = condition.CanCancelQuest(this);
+                ConditionInfo c = condition.CanCancelQuest(this);
                 if (c == false)
                 {
                     return c;
@@ -502,9 +494,9 @@ namespace Devdog.QuestSystemPro
                 return new ConditionInfo(false);
             }
 
-            foreach (var condition in conditions)
+            foreach (IQuestCondition condition in conditions)
             {
-                var c = condition.CanDeclineQuest(this);
+                ConditionInfo c = condition.CanDeclineQuest(this);
                 if (c == false)
                 {
                     return c;
@@ -542,16 +534,18 @@ namespace Devdog.QuestSystemPro
             switch (taskOrder)
             {
                 case TaskOrder.Parallel:
-                    foreach (var task in tasks)
+                    foreach (Task task in tasks)
                     {
                         task.Activate();
                     }
+
                     break;
                 case TaskOrder.Single:
                     if (tasks.Length > 0)
                     {
                         tasks[0].Activate();
                     }
+
                     break;
                 default:
                     throw new ArgumentOutOfRangeException();
@@ -560,14 +554,13 @@ namespace Devdog.QuestSystemPro
 
         public void ResetProgress()
         {
-            foreach (var task in tasks)
+            foreach (Task task in tasks)
             {
                 task.ResetProgress();
             }
 
             // status = QuestStatus.InActive;
         }
-
 
         public bool CompleteAndGiveRewards(bool forceComplete = false)
         {
@@ -597,7 +590,7 @@ namespace Devdog.QuestSystemPro
 
         private void NotifyTasksQuestCompleted()
         {
-            foreach (var task in tasks)
+            foreach (Task task in tasks)
             {
                 task.NotifyQuestCompleted();
             }
@@ -605,18 +598,18 @@ namespace Devdog.QuestSystemPro
 
         public ConditionInfo CanGiveRewards()
         {
-            foreach (var rewardGiver in rewardGivers)
+            foreach (IRewardGiver rewardGiver in rewardGivers)
             {
-                var s = rewardGiver.CanGiveRewards(this);
+                ConditionInfo s = rewardGiver.CanGiveRewards(this);
                 if (s == false)
                 {
                     return s;
                 }
             }
 
-            foreach (var task in tasks)
+            foreach (Task task in tasks)
             {
-                var s = task.CanGiveRewards();
+                ConditionInfo s = task.CanGiveRewards();
                 if (s == false && task.gaveRewards == false)
                 {
                     return s;
@@ -628,7 +621,7 @@ namespace Devdog.QuestSystemPro
 
         private void GiveActivationRewards()
         {
-            foreach (var rewardGiver in onActivationRewardGivers)
+            foreach (IRewardGiver rewardGiver in onActivationRewardGivers)
             {
                 rewardGiver.GiveRewards(this);
             }
@@ -636,12 +629,12 @@ namespace Devdog.QuestSystemPro
 
         private void GiveRewards()
         {
-            foreach (var rewardGiver in rewardGivers)
+            foreach (IRewardGiver rewardGiver in rewardGivers)
             {
                 rewardGiver.GiveRewards(this);
             }
 
-            foreach (var task in tasks)
+            foreach (Task task in tasks)
             {
                 if (task.isCompleted)
                 {
@@ -652,12 +645,12 @@ namespace Devdog.QuestSystemPro
 
         private void CompleteCompletableTasks(bool forceComplete)
         {
-            foreach (var task in tasks)
+            foreach (Task task in tasks)
             {
                 if ((task.isCompleted == false && task.IsProgressSufficientToComplete()) || forceComplete)
                 {
                     task.Complete(forceComplete);
-//                    task.GiveRewards(); // Rewards only given when entire quest is completed.
+                    //                    task.GiveRewards(); // Rewards only given when entire quest is completed.
                 }
             }
         }
@@ -671,14 +664,14 @@ namespace Devdog.QuestSystemPro
 
             status = QuestStatus.Cancelled;
             CancelAllTasks();
-//            ResetProgress();
+            //            ResetProgress();
 
             return true;
         }
 
         private void CancelAllTasks()
         {
-            foreach (var task in tasks)
+            foreach (Task task in tasks)
             {
                 task.Cancel();
             }
@@ -692,7 +685,7 @@ namespace Devdog.QuestSystemPro
             }
 
             status = QuestStatus.InActive;
-//            ResetProgress();
+            //            ResetProgress();
 
             return true;
         }

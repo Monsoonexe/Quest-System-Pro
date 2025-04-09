@@ -6,8 +6,8 @@ namespace Devdog.QuestSystemPro
     public struct ConditionInfo : IEquatable<ConditionInfo>
     {
         public readonly bool status;
-        public readonly MultiLangString message;
-        public object[] vars;
+        public readonly MultiLangString? message;
+        public readonly object[] vars;
 
         public static ConditionInfo success
         {
@@ -17,11 +17,11 @@ namespace Devdog.QuestSystemPro
             }
         }
 
-        public ConditionInfo(bool conditionStatus, MultiLangString conditionMessage = null)
-            : this(conditionStatus, conditionMessage, new object[0])
+        public ConditionInfo(bool conditionStatus, MultiLangString? conditionMessage = null)
+            : this(conditionStatus, conditionMessage, Array.Empty<object>())
         { }
 
-        public ConditionInfo(bool conditionStatus, MultiLangString conditionMessage, params object[] vars)
+        public ConditionInfo(bool conditionStatus, MultiLangString? conditionMessage, params object[] vars)
         {
             status = conditionStatus;
             message = conditionMessage;
@@ -48,7 +48,7 @@ namespace Devdog.QuestSystemPro
             if (message == null)
                 return string.Empty;
 
-            return message.TitleToString(vars);
+            return message.Value.TitleToString(vars);
         }
 
         public string MessageToString()
@@ -56,7 +56,7 @@ namespace Devdog.QuestSystemPro
             if (message == null)
                 return string.Empty;
 
-            return message.MessageToString(vars);
+            return message.Value.MessageToString(vars);
         }
 
         public bool Equals(ConditionInfo other)
@@ -66,8 +66,9 @@ namespace Devdog.QuestSystemPro
 
         public override bool Equals(object obj)
         {
-            if (ReferenceEquals(null, obj)) return false;
-            return obj is ConditionInfo && Equals((ConditionInfo)obj);
+            if (ReferenceEquals(null, obj))
+                return false;
+            return obj is ConditionInfo info && Equals(info);
         }
 
         public override int GetHashCode()

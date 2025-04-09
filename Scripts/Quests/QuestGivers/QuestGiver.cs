@@ -10,7 +10,7 @@ namespace Devdog.QuestSystemPro
     {
         [SerializeField]
         [FormerlySerializedAs("quests")]
-        private Quest[] _quests = new Quest[0];
+        private Quest[] _quests = System.Array.Empty<Quest>();
         public Quest[] quests
         {
             get { return _quests; }
